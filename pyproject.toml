@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "r8link"
+version = "0.1.0"
+description = "Read live data from a Uniden R8w radar detector over Bluetooth LE"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Aigis" }]
+keywords = ["uniden", "r8w", "radar detector", "bluetooth", "ble", "bleak"]
+dependencies = ["bleak>=0.21,<4"]
+
+[project.urls]
+Homepage = "https://github.com/Aegisx86/UnidenR8wlink"
+
+[tool.hatch.build.targets.wheel]
+packages = ["r8link"]
