@@ -4,17 +4,35 @@ build-backend = "hatchling.build"
 
 [project]
 name = "r8link"
-version = "0.1.0"
+version = "0.9.0"
 description = "Read live data from a Uniden R8w radar detector over Bluetooth LE"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
-authors = [{ name = "Aigis" }]
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "P.R_Aigis", email = "0xpraigis@gmail.com" }]
 keywords = ["uniden", "r8w", "radar detector", "bluetooth", "ble", "bleak"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Hardware :: Hardware Drivers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = ["bleak>=0.21,<4"]
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [project.urls]
-Homepage = "https://github.com/Aegisx86/UnidenR8wlink"
+Homepage = "https://github.com/AegisX86/UnidenR8wlink"
+Documentation = "https://github.com/AegisX86/UnidenR8wlink/blob/main/PROTOCOL.md"
+Issues = "https://github.com/AegisX86/UnidenR8wlink/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["r8link"]
