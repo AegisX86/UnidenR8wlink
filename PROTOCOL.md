@@ -9,7 +9,7 @@ Not affiliated with or endorsed by Uniden. This is a reverse engineering
 writeup, not official documentation.
 
 If you just want to read data, use the library and skip this: see
-[README.md](README.md).
+[README.md](https://github.com/AegisX86/UnidenR8wlink/blob/main/README.md).
 
 ## Disclaimer
 

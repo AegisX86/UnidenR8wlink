@@ -15,10 +15,10 @@ the failure modes checked before they happen instead of after. It:
   - disconnects, because BlueZ holds the link and will not share it
   - connects with r8link and reads real telemetry off the thing
 
-Run it from the repo with the venv active:
+Run it with the venv active:
 
-    python pair.py                      # scan and pick
-    python pair.py E0:00:00:00:23:D4    # skip the scan, use this address
+    r8link-pair                      # scan and pick
+    r8link-pair E0:00:00:00:23:D4    # skip the scan, use this address
 
 The second form doubles as a health check on an already-paired unit: say
 no when it offers to re-pair and it will just disconnect, connect, and
@@ -41,15 +41,7 @@ import sys
 import threading
 import time
 
-try:
-    from r8link import R8W
-except ImportError:
-    sys.exit(
-        "Could not import r8link.\n"
-        "Activate the venv and install the package first:\n"
-        "    source .venv/bin/activate\n"
-        "    pip install -e ."
-    )
+from .client import R8W
 
 
 # ---------------------------------------------------------------- output
@@ -94,7 +86,7 @@ def pause(prompt: str) -> None:
 
 def arm_prompt(again: bool = False) -> None:
     """Tell the user to put the detector into pairing mode."""
-  
+
     print()
     if again:
         print("  The pairing window may have closed during the scan. Re-arm it")
@@ -117,7 +109,7 @@ def arm_prompt(again: bool = False) -> None:
 
 # ------------------------------------------------------------- subprocess
 
-def run(args: list[str], timeout: float = 20.0) -> tuple[int, str]:
+def run_cmd(args: list[str], timeout: float = 20.0) -> tuple[int, str]:
     """Run a command, return (returncode, stdout+stderr). Never raises."""
     try:
         p = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
@@ -133,7 +125,7 @@ def bctl(*args: str, timeout: float = 25.0) -> tuple[int, str]:
 
     NOT fine for pairing: see BluetoothCtl below for why.
     """
-    return run(["bluetoothctl", *args], timeout=timeout)
+    return run_cmd(["bluetoothctl", *args], timeout=timeout)
 
 
 def device_info(address: str) -> dict[str, str]:
@@ -248,7 +240,7 @@ def check_platform() -> None:
 def check_rfkill() -> None:
     step("Checking rfkill")
 
-    code, out = run(["rfkill", "list", "bluetooth"])
+    code, out = run_cmd(["rfkill", "list", "bluetooth"])
     if code != 0:
         warn("Could not read rfkill state, carrying on anyway.")
         return
@@ -262,7 +254,7 @@ def check_rfkill() -> None:
     if "Soft blocked: yes" in out:
         warn("Bluetooth is soft blocked. This is the default on some Pi images.")
         if ask("Run `sudo rfkill unblock bluetooth` now?"):
-            code, out = run(["sudo", "rfkill", "unblock", "bluetooth"], timeout=60)
+            code, out = run_cmd(["sudo", "rfkill", "unblock", "bluetooth"], timeout=60)
             if code != 0:
                 die("Unblock failed.", out)
             ok("Unblocked")
@@ -303,11 +295,11 @@ def check_group() -> None:
 def check_daemon() -> None:
     step("Checking bluetoothd")
 
-    code, out = run(["systemctl", "is-active", "bluetooth"])
+    code, out = run_cmd(["systemctl", "is-active", "bluetooth"])
     if out.strip() != "active":
         warn(f"bluetooth.service is '{out.strip() or 'unknown'}'.")
         if ask("Start it with `sudo systemctl enable --now bluetooth`?"):
-            code, out = run(["sudo", "systemctl", "enable", "--now", "bluetooth"], timeout=60)
+            code, out = run_cmd(["sudo", "systemctl", "enable", "--now", "bluetooth"], timeout=60)
             if code != 0:
                 die("Could not start bluetoothd.", out)
         else:
@@ -568,7 +560,7 @@ async def verify(address: str) -> bool:
 
 # ------------------------------------------------------------------ main
 
-async def main() -> int:
+async def run(argv: list[str] | None = None) -> int:
     print(_c("1", "\nr8link pairing helper"))
     print("The wizard will now setup your Uniden R8w for use on this machine ^_^")
 
@@ -577,8 +569,10 @@ async def main() -> int:
     check_group()
     check_daemon()
 
-    if len(sys.argv) > 1:
-        address = sys.argv[1].strip().upper()
+    argv = sys.argv[1:] if argv is None else argv
+
+    if argv:
+        address = argv[0].strip().upper()
         already_armed = False
         step(f"Using address {address} from the command line")
     else:
@@ -608,16 +602,23 @@ async def main() -> int:
     print()
     print(_c("32", "Done."))
     print()
-    print("Pairing is persistent, you only do this once. Next:")
+    print("Pairing is persistent, you only do this once.")
+    print(f"Your detector's address is {_c('1', address)} - pass it to R8W()")
+    print("and you are away. Examples, if you want them:")
     print()
-    print(f"    python examples/monitor.py {address}")
+    print("    https://github.com/AegisX86/UnidenR8wlink/tree/main/examples")
     print()
     return 0
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Console entry point. Installed as `r8link-pair`."""
     try:
-        sys.exit(asyncio.run(main()))
+        sys.exit(asyncio.run(run()))
     except KeyboardInterrupt:
         print("\nCancelled.")
         sys.exit(130)
+
+
+if __name__ == "__main__":
+    main()

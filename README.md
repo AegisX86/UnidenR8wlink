@@ -17,8 +17,10 @@ async with R8W("E0:00:00:00:23:D4") as r8:
                 print(alert)     # KA 33.785 GHz 5/8 front
 ```
 
-There is a full protocol writeup in [PROTOCOL.md](PROTOCOL.md): packet
-formats, what every field means, and which parts of it I am guessing about.
+There is a full protocol writeup in
+[PROTOCOL.md](https://github.com/AegisX86/UnidenR8wlink/blob/main/PROTOCOL.md):
+packet formats, what every field means, and which parts of it I am
+guessing about.
 
 ## Where this has been
 
@@ -35,8 +37,8 @@ than remembered. I set the whole thing up again from scratch on a clean Pi
 to check they were still true. Two things had screwed me back in January
 that I had completely forgotten about, and both of them screwed me again in
 July. They are written down properly now, in the pairing section. There is
-also a `pair.py` that does the whole setup for you, since writing the
-warnings down was evidently not enough to make me follow them.
+also an `r8link-pair` command that does the whole setup for you, since
+writing the warnings down was evidently not enough to make me follow them.
 
 ## Requirements
 
@@ -64,26 +66,39 @@ the device by name. Never tried it. PRs welcome.
 ## Installing
 
 ```
-git clone https://github.com/Aegisx86/UnidenR8wlink
-cd UnidenR8wlink
-python3 -m venv .venv        # Raspberry Pi OS will not let pip touch system Python
+python3 -m venv .venv
 source .venv/bin/activate
-pip install -e .
+pip install r8link
 ```
 
 The venv is not optional on anything recent. Debian marks the system
-Python as externally managed and `pip install .` fails with
+Python as externally managed and `pip install` fails with
 `error: externally-managed-environment` before it gets anywhere near this
-code. Use `-e` so you can edit `r8link/` without reinstalling.
+code.
 
-Run the tests before you try and pair a R8w:
+That gives you the library and the `r8link-pair` command. The examples
+live in the repo rather than the package; if you want those, or you want
+to edit the library, install from source instead.
+
+### From source
 
 ```
-pip install pytest && pytest
+git clone https://github.com/AegisX86/UnidenR8wlink
+cd UnidenR8wlink
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
 ```
 
-If they pass, the package imports and the packet formats are intact, 
-and anything that goes wrong from here is Bluetooth's fault 
+`-e` so you can edit `r8link/` without reinstalling, and the `dev` extra
+pulls in pytest. Run the tests before you try and pair a R8w:
+
+```
+pytest
+```
+
+If they pass, the package imports and the packet formats are intact,
+and anything that goes wrong from here is Bluetooth's fault
 rather than mine.
 
 ## Pairing
@@ -94,10 +109,10 @@ the characteristics, and then every read comes back empty or with an
 authentication complaint. Phones hide this from you, which is why nRF
 Connect works out of the box and your Python script does not.
 
-There is a script for it:
+There is a command for it:
 
 ```
-python pair.py
+r8link-pair
 ```
 
 It checks the things that would otherwise waste your evening (rfkill,
@@ -107,11 +122,14 @@ and reads real telemetry so you know it actually worked rather than just
 that it paired. If you already know the address:
 
 ```
-python pair.py E0:00:00:00:23:D4
+r8link-pair E0:00:00:00:23:D4
 ```
 
 That form also works as a health check on an already-paired unit. Say no
 when it offers to re-pair and it will just connect and read.
+
+Do not run it with sudo. It will ask you to run the one command that
+needs root, if it needs it at all.
 
 ### Manual pairing
 
@@ -195,6 +213,9 @@ Pairing is persistent, you only do this once. If it goes wrong later,
 "forget" the device on both sides and redo it.
 
 ## Running the examples
+
+These live in the repo, not the package. Clone it, or grab them from
+[GitHub](https://github.com/AegisX86/UnidenR8wlink/tree/main/examples).
 
 ```
 python examples/minimal.py [address]     # print alerts as they arrive
@@ -316,12 +337,12 @@ points make the reference better.
   I/O. Every packet format lives here and can be tested from a string.
 - `r8link/client.py` - the bleak wrapper. Connect, subscribe, queue, hand
   you parsed packets. UUIDs and the write command constants.
+- `r8link/pair.py` - the setup dance, automated, with a read at the end to
+  prove it worked. This is `r8link-pair`.
 - `r8link/errors.py` - three exceptions, one of which is a four-page
   apology about pairing.
 - `r8link/__init__.py` - the public surface.
-- `pair.py` - the setup dance, automated, with a read at the end to prove
-  it worked.
-- `examples/` - `minimal.py` and the dashboard.
+- `examples/` - `minimal.py` and the dashboard. Repo only.
 - `tests/test_protocol.py` - parser tests against captured packets, no
   hardware needed.
 
